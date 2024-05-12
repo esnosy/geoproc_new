@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstdint>
 #include <fstream>
 #include <ios>
@@ -16,6 +17,8 @@ struct Vec3 {
   Vec3 operator-(const Vec3 &v) const { return Vec3(x - v.x, y - v.y, z - v.z); }
   Vec3 operator*(float s) const { return Vec3(x * s, y * s, z * s); }
   friend Vec3 operator*(float s, const Vec3 &v) { return v * s; }
+  Vec3 cross(const Vec3 &v) const { return Vec3(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x); }
+  float mag() const { return std::sqrt(x * x + y * y + z * z); }
 };
 
 struct Vec2 {
@@ -31,6 +34,7 @@ struct Vec2 {
 struct Triangle {
   Vec3 a, b, c;
   Triangle(const Vec3 &a, const Vec3 &b, const Vec3 &c) : a(a), b(b), c(c) {}
+  float area() const { return (b - a).cross(c - a).mag() * 0.5f; }
 };
 
 struct Mesh {
@@ -115,10 +119,14 @@ int main(int argc, char **argv) {
   }
   std::cout << "Number of triangles: " << mesh->tris.size() << std::endl;
 
+  std::vector<float> triangle_areas;
+  triangle_areas.reserve(mesh->tris.size());
+  for (const Triangle &t : mesh->tris) {
+    triangle_areas.push_back(t.area());
+  }
+
   std::mt19937 prng_engine(seed);
-  // TODO: sample larger triangles more often
-  // by using triangle areas as weights for std::discrete_distribution
-  std::uniform_int_distribution<uint32_t> prng_dist(0, mesh->tris.size() - 1);
+  std::discrete_distribution<uint32_t> prng_dist(triangle_areas.begin(), triangle_areas.end());
   auto get_rand_index = [&] { return prng_dist(prng_engine); };
 
   std::uniform_real_distribution<float> u_dist(0.0f, 1.0f);
