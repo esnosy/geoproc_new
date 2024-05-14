@@ -73,6 +73,7 @@ static Mesh read_stl_binary(std::ifstream &ifs, uint32_t num_tris) {
     ifs.seekg(sizeof(float[3]), std::ios_base::cur);
     Triangle t(Vec3(0.0f), Vec3(0.0f), Vec3(0.0f));
     static_assert(sizeof(Triangle) == sizeof(float[3][3]));
+    // TODO: handle endianness
     ifs.read((char *)&t, sizeof(float[3][3]));
     // Skip "attribute byte count"
     ifs.seekg(sizeof(uint16_t), std::ios_base::cur);
