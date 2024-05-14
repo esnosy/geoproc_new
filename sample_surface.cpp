@@ -9,6 +9,19 @@
 #include <string_view>
 #include <vector>
 
+// https://en.cppreference.com/mwiki/index.php?title=cpp/types/endian&oldid=154532#Possible_implementation
+enum class endian {
+#if defined(_MSC_VER) && !defined(__clang__)
+  little = 0,
+  big = 1,
+  native = little
+#else
+  little = __ORDER_LITTLE_ENDIAN__,
+  big = __ORDER_BIG_ENDIAN__,
+  native = __BYTE_ORDER__
+#endif
+};
+
 struct Vec3 {
   float x, y, z;
   explicit Vec3(float s) : x(s), y(s), z(s) {}
@@ -158,8 +171,13 @@ int main(int argc, char **argv) {
   ofs.exceptions(std::ios_base::badbit);
   ofs.open(output_filepath, std::ios_base::binary);
   ofs << "ply\n";
-  // TODO: handle endianess
-  ofs << "format binary_little_endian 1.0\n";
+  ofs << "format ";
+  if (endian::native == endian::little) {
+    ofs << "binary_little_endian";
+  } else {
+    ofs << "binary_big_endian";
+  }
+  ofs << " 1.0\n";
   ofs << "element vertex " << num_points << "\n";
   ofs << "property float x\n";
   ofs << "property float y\n";
