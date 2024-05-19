@@ -17,6 +17,7 @@ add_library(mesh_io mesh_io.cpp)
 target_compile_features(mesh_io PRIVATE cxx_std_17)
 
 add_library(write_ply write_ply.cpp)
+target_compile_features(write_ply PRIVATE cxx_std_17)
 
 add_executable(sample_surface sample_surface.cpp)
 target_link_libraries(sample_surface mesh_io write_ply)
