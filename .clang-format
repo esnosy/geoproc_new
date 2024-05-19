@@ -1,2 +1,3 @@
 ColumnLimit: 120
 AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+InsertNewlineAtEOF: true
