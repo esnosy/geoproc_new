@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <cmath>
 #include <iostream>
 
@@ -22,6 +23,18 @@ struct Vec3 {
   friend std::ostream &operator<<(std::ostream &os, const Vec3 &v) {
     os << "(" << v.x << ", " << v.y << ", " << v.z << ")";
     return os;
+  }
+  float &operator[](size_t i) {
+    assert(i < 3);
+    if (i == 0) return x;
+    if (i == 1) return y;
+    return z;
+  }
+  float operator[](size_t i) const {
+    assert(i < 3);
+    if (i == 0) return x;
+    if (i == 1) return y;
+    return z;
   }
 };
 
