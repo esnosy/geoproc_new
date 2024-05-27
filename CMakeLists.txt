@@ -26,3 +26,6 @@ target_compile_features(sample_surface PRIVATE cxx_std_17)
 add_executable(sample_volume sample_volume.cpp)
 target_link_libraries(sample_volume mesh_io write_ply)
 target_compile_features(sample_volume PRIVATE cxx_std_17)
+
+add_executable(fixed_point_demo fixed_point_demo.cpp)
+target_compile_features(fixed_point_demo PRIVATE cxx_std_17)
