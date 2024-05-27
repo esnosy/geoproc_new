@@ -32,8 +32,8 @@ int main(int argc, char **argv) {
   }
 
   std::mt19937 prng_engine(seed);
-  std::discrete_distribution<uint32_t> prng_dist(triangle_areas.begin(), triangle_areas.end());
-  auto get_rand_index = [&] { return prng_dist(prng_engine); };
+  std::discrete_distribution<uint32_t> i_dist(triangle_areas.begin(), triangle_areas.end());
+  auto get_rand_index = [&] { return i_dist(prng_engine); };
 
   std::uniform_real_distribution<float> u_dist(0.0f, 1.0f);
   std::uniform_real_distribution<float> v_dist(0.0f, 1.0f);
