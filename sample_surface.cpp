@@ -35,16 +35,12 @@ int main(int argc, char **argv) {
   std::discrete_distribution<uint32_t> i_dist(triangle_areas.begin(), triangle_areas.end());
   auto get_rand_index = [&] { return i_dist(prng_engine); };
 
-  std::uniform_real_distribution<float> u_dist(0.0f, 1.0f);
-  std::uniform_real_distribution<float> v_dist(0.0f, 1.0f);
-
-  auto get_rand_u = [&] { return u_dist(prng_engine); };
-  auto get_rand_v = [&] { return v_dist(prng_engine); };
-
+  std::uniform_real_distribution<float> f_dist(0.0f, 1.0f);
+  auto get_rand_f = [&] { return f_dist(prng_engine); };
   // https://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations#UniformSampleTriangle
   auto get_rand_bary = [&] {
-    float u = get_rand_u();
-    float v = get_rand_v();
+    float u = get_rand_f();
+    float v = get_rand_f();
     u = std::sqrt(u);
     return Vec2(1.0f - u, v * u);
   };
