@@ -14,10 +14,10 @@ private:
 public:
   explicit Fixed_Point_64(float f) : value(std::round(f * inv_scale)) {}
   explicit Fixed_Point_64(double f) : value(std::round(f * inv_scale)) {}
-  Fixed_Point_64 operator+(Fixed_Point_64 other) const { return Fixed_Point_64(value + other.value); }
-  Fixed_Point_64 operator-(Fixed_Point_64 other) const { return Fixed_Point_64(value - other.value); }
-  Fixed_Point_64 operator*(Fixed_Point_64 other) const { return Fixed_Point_64((value * other.value) / inv_scale); }
-  Fixed_Point_64 operator/(Fixed_Point_64 other) const { return Fixed_Point_64((value * inv_scale) / other.value); }
+  Fixed_Point_64 operator+(const Fixed_Point_64 &other) const { return Fixed_Point_64(value + other.value); }
+  Fixed_Point_64 operator-(const Fixed_Point_64 &other) const { return Fixed_Point_64(value - other.value); }
+  Fixed_Point_64 operator*(const Fixed_Point_64 &other) const { return Fixed_Point_64((value * other.value) / inv_scale); }
+  Fixed_Point_64 operator/(const Fixed_Point_64 &other) const { return Fixed_Point_64((value * inv_scale) / other.value); }
   friend std::ostream &operator<<(std::ostream &os, const Fixed_Point_64 &number) {
     return os << number.value / inv_scale << "." << number.value % inv_scale;
   }
