@@ -11,9 +11,9 @@ private:
   uint64_t value = 0;
   constexpr static uint64_t num_fract_digits = 3;
   constexpr static uint64_t inv_scale = [] {
-    uint64_t scale = 1;
-    for (uint64_t i = 0; i < num_fract_digits; i++) scale *= 10;
-    return scale;
+    uint64_t result = 1;
+    for (uint64_t i = 0; i < num_fract_digits; i++) result *= 10;
+    return result;
   }();
   explicit Fixed_Point_64(uint64_t value) : value(value) {}
 
