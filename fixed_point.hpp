@@ -19,8 +19,21 @@ private:
   explicit Fixed_Point_64(int64_t value) : value(value) {}
 
 public:
+  // TODO: reduce repeated code
   static Fixed_Point_64 from_float(float f) { return Fixed_Point_64(std::round(f * inv_scale)); }
   static Fixed_Point_64 from_double(double f) { return Fixed_Point_64(std::round(f * inv_scale)); }
+  float to_float() const {
+    auto div = std::div(std::abs(value), inv_scale);
+    float result = float(div.quot) + float(div.rem) / float(inv_scale);
+    if (value < 0) result = -result;
+    return result;
+  };
+  double to_double() const {
+    auto div = std::div(std::abs(value), inv_scale);
+    double result = double(div.quot) + double(div.rem) / double(inv_scale);
+    if (value < 0) result = -result;
+    return result;
+  }
   static Fixed_Point_64 from_unscaled(int64_t value) { return Fixed_Point_64(value); }
   Fixed_Point_64 operator+(const Fixed_Point_64 &other) const { return Fixed_Point_64(value + other.value); }
   Fixed_Point_64 operator-(const Fixed_Point_64 &other) const { return Fixed_Point_64(value - other.value); }
