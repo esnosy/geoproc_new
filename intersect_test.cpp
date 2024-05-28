@@ -12,12 +12,13 @@
     std::exit(1);                                                                                                           \
   }
 
+struct Test_Case {
+  AABB aabb;
+  Ray ray;
+  bool expected_result;
+};
+
 int main() {
-  struct Test_Case {
-    AABB aabb;
-    Ray ray;
-    bool expected_result;
-  };
   std::vector<Test_Case> cases = {
       {{Vec3(0.0f), Vec3(1.0f)}, {Vec3(-1.0f, 0.5f, 0.5f), Vec3(1.0f, 0.0f, 0.0f)}, true},
       {{Vec3(0.0f), Vec3(1.0f)}, {Vec3(-1.0f, 0.5f, 2.0f), Vec3(1.0f, 0.0f, 0.0f)}, false},
