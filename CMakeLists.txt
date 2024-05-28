@@ -33,9 +33,17 @@ target_compile_features(fixed_point_demo PRIVATE cxx_std_17)
 add_library(intersect intersect.cpp)
 target_compile_features(intersect PRIVATE cxx_std_17)
 
+add_library(distance distance.cpp)
+target_compile_features(distance PRIVATE cxx_std_17)
+
 include(CTest)
 
 add_executable(test_intersection intersect_test.cpp)
 target_link_libraries(test_intersection PRIVATE intersect)
 target_compile_features(test_intersection PRIVATE cxx_std_17)
 add_test(NAME test_intersection COMMAND test_intersection)
+
+add_executable(test_distance distance_test.cpp)
+target_link_libraries(test_distance PRIVATE distance)
+target_compile_features(test_distance PRIVATE cxx_std_17)
+add_test(NAME test_distance COMMAND test_distance)

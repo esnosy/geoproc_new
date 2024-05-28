@@ -20,6 +20,8 @@ struct Vec3 {
   static Vec3 min(const Vec3 &a, const Vec3 &b) {
     return Vec3(std::fmin(a.x, b.x), std::fmin(a.y, b.y), std::fmin(a.z, b.z));
   }
+  Vec3 clamped(const Vec3 &min, const Vec3 &max) const { return Vec3::min(Vec3::max(*this, min), max); }
+  float dist(const Vec3 &other) const { return (other - *this).mag(); }
   friend std::ostream &operator<<(std::ostream &os, const Vec3 &v) {
     os << "(" << v.x << ", " << v.y << ", " << v.z << ")";
     return os;
