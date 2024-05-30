@@ -1,16 +1,9 @@
-#include <cstdlib>
-#include <iostream>
 #include <vector>
 
 #include "aabb.hpp"
 #include "intersect.hpp"
+#include "test.hpp"
 #include "vec.hpp"
-
-#define runtime_assert(expression)                                                                                          \
-  if (!(expression)) {                                                                                                      \
-    std::cerr << "Runtime assertion failed: " << #expression << std::endl;                                                  \
-    std::exit(1);                                                                                                           \
-  }
 
 struct Test_Case {
   AABB aabb;
@@ -25,7 +18,8 @@ int main() {
       {{Vec3(0.0f), Vec3(1.0f)}, {Vec3(0.5f, 0.5f, 0.5f), Vec3(1.0f, 0.0f, 0.0f)}, true},
   };
   for (const auto &c : cases) {
-    runtime_assert(does_intersect(c.ray, c.aabb) == c.expected_result);
+    assert_equals(does_intersect(c.ray, c.aabb), c.expected_result);
   }
+  // TODO: test more functions
   return 0;
 }
