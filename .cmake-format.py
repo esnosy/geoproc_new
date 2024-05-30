@@ -22,7 +22,7 @@ with section("format"):  # noqa: F821 # type: ignore
     disable = False
 
     # How wide to allow formatted cmake files
-    line_width = 120
+    line_width = 80
 
     # How many spaces to tab for indent
     tab_size = 4

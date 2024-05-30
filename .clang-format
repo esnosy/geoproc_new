@@ -1,4 +1,4 @@
 InsertNewlineAtEOF: true
-ColumnLimit: 125
+ColumnLimit: 80
 AllowShortLoopsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: AllIfsAndElse

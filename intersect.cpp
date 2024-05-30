@@ -19,7 +19,9 @@ bool does_intersect(const Ray &ray, const AABB &aabb) {
   float running_t_min = 0.0f;
   float running_t_max = RAY_MAX;
   for (int i = 0; i < 3; i++) {
-    if (is_zero(ray.direction[i]) && (ray.origin[i] < aabb.min[i] || ray.origin[i] > aabb.max[i])) return false;
+    if (is_zero(ray.direction[i]) &&
+        (ray.origin[i] < aabb.min[i] || ray.origin[i] > aabb.max[i]))
+      return false;
     float t_min = (aabb.min[i] - ray.origin[i]) / ray.direction[i];
     float t_max = (aabb.max[i] - ray.origin[i]) / ray.direction[i];
     if (t_min > running_t_max) return false;
@@ -30,7 +32,8 @@ bool does_intersect(const Ray &ray, const AABB &aabb) {
   return true;
 }
 
-static float calculate_cofactor(const std::array<Vec3, 3> &columns, uint8_t cofactor_row, uint8_t cofactor_column) {
+static float calculate_cofactor(const std::array<Vec3, 3> &columns,
+                                uint8_t cofactor_row, uint8_t cofactor_column) {
   float minor_rows[2][2];
   uint8_t minor_row = 0;
   uint8_t minor_column = 0;
@@ -45,10 +48,12 @@ static float calculate_cofactor(const std::array<Vec3, 3> &columns, uint8_t cofa
     minor_row++;
   }
   return SIGN_TABLE[cofactor_row][cofactor_column] *
-         (minor_rows[0][0] * minor_rows[1][1] - minor_rows[0][1] * minor_rows[1][0]);
+         (minor_rows[0][0] * minor_rows[1][1] -
+          minor_rows[0][1] * minor_rows[1][0]);
 }
 
-static Vec3 calculate_cofactor_column(const std::array<Vec3, 3> &columns, uint8_t column) {
+static Vec3 calculate_cofactor_column(const std::array<Vec3, 3> &columns,
+                                      uint8_t column) {
   return Vec3{
       calculate_cofactor(columns, 0, column),
       calculate_cofactor(columns, 1, column),
@@ -57,7 +62,8 @@ static Vec3 calculate_cofactor_column(const std::array<Vec3, 3> &columns, uint8_
 }
 
 // Returns rows of inverse of input columns
-static std::optional<std::array<Vec3, 3>> invert(const std::array<Vec3, 3> &columns) {
+static std::optional<std::array<Vec3, 3>>
+invert(const std::array<Vec3, 3> &columns) {
   Vec3 cofactor_column_0 = calculate_cofactor_column(columns, 0);
   float det = cofactor_column_0.dot(columns[0]);
   if (is_zero(det)) return std::nullopt;

@@ -8,7 +8,8 @@ option(GEOPROC_DISABLE_ASAN "" OFF)
 if (NOT GEOPROC_DISABLE_ASAN)
     if (MSVC)
         add_compile_options(/fsanitize=address)
-        add_link_options(/INCREMENTAL:NO) # Disable incremental linking because MSVC ASAN is not compatible with it.
+        add_link_options(/INCREMENTAL:NO) # Disable incremental linking because
+                                          # MSVC ASAN is not compatible with it.
     else ()
         add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
         add_link_options(-fsanitize=address)
@@ -28,7 +29,8 @@ add_library(distance distance.cpp)
 target_compile_features(distance PRIVATE cxx_std_17)
 
 add_executable(sample_volume sample_volume.cpp)
-target_link_libraries(sample_volume mesh_io write_ply intersect OpenMP::OpenMP_CXX)
+target_link_libraries(sample_volume mesh_io write_ply intersect
+                      OpenMP::OpenMP_CXX)
 target_compile_features(sample_volume PRIVATE cxx_std_17)
 
 add_executable(sample_surface sample_surface.cpp)

@@ -12,7 +12,8 @@ int main() {
   std::cout << a << std::endl;
   std::cout << std::boolalpha << (a == original_a) << std::endl;
 
-  auto b = Fixed_Point_64::from_unscaled(-100900) * Fixed_Point_64::from_unscaled(1000);
+  auto b = Fixed_Point_64::from_unscaled(-100900) *
+           Fixed_Point_64::from_unscaled(1000);
   std::cout << b << std::endl;
   std::cout << b.to_float() << std::endl;
   return 0;

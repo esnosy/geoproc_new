@@ -51,7 +51,9 @@ private:
     return aabb;
   }
 
-  static AABB join_aabbs(const std::vector<AABB> &aabs, const std::vector<uint32_t> &map, uint32_t start, uint32_t end) {
+  static AABB join_aabbs(const std::vector<AABB> &aabs,
+                         const std::vector<uint32_t> &map, uint32_t start,
+                         uint32_t end) {
     AABB aabb = aabs[map[start]];
     for (uint32_t i = start + 1; i < end; i++) {
       aabb.min = Vec3::min(aabb.min, aabs[map[i]].min);
@@ -87,7 +89,8 @@ public:
       uint8_t split_axis = 0;
       if (extent.y > extent.x) split_axis = 1;
       if (extent.z > extent[split_axis]) split_axis = 2;
-      float split_pos = node->aabb.min[split_axis] * 0.5f + node->aabb.max[split_axis] * 0.5f;
+      float split_pos =
+          node->aabb.min[split_axis] * 0.5f + node->aabb.max[split_axis] * 0.5f;
       uint32_t i = node->start;
       uint32_t j = node->end;
       while (i < j) {
@@ -111,7 +114,8 @@ public:
       stack.push(right);
     }
   }
-  // Remap an index stored in a BVH node to an valid index in the primitives array
+  // Remap an index stored in a BVH node to an valid index in the primitives
+  // array
   uint32_t remap_index(uint32_t i) const {
     assert(i < map.size());
     return map[i];
@@ -132,7 +136,8 @@ public:
   }
 };
 
-static size_t count_intersections(const Ray &r, const BVH_Tree &tree, const std::vector<Triangle> &tris) {
+static size_t count_intersections(const Ray &r, const BVH_Tree &tree,
+                                  const std::vector<Triangle> &tris) {
   std::stack<const BVH_Node *> stack;
   stack.push(tree.get_root());
   size_t num_hits = 0;
@@ -153,7 +158,8 @@ static size_t count_intersections(const Ray &r, const BVH_Tree &tree, const std:
   return num_hits;
 }
 
-static bool is_point_in_volume(const Vec3 &p, const BVH_Tree &tree, const std::vector<Triangle> &tris) {
+static bool is_point_in_volume(const Vec3 &p, const BVH_Tree &tree,
+                               const std::vector<Triangle> &tris) {
   Ray r{p, Vec3(0, 0, 1)};
   size_t num_hits = count_intersections(r, tree, tris);
   return num_hits % 2 != 0;
@@ -217,7 +223,10 @@ int main(int argc, char **argv) {
     is_in_volume[i] = is_point_in_volume(points[i], tree, tris);
   }
   auto t2 = std::chrono::high_resolution_clock::now();
-  std::cout << "Took " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms" << std::endl;
+  std::cout
+      << "Took "
+      << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
+      << "ms" << std::endl;
 
   std::vector<Vec3> filtered_points;
   filtered_points.reserve(num_points);

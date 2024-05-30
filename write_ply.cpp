@@ -3,7 +3,8 @@
 #include "endianness.hpp"
 #include "write_ply.hpp"
 
-void write_ply(const std::vector<Vec3> &points, const std::string &output_path) {
+void write_ply(const std::vector<Vec3> &points,
+               const std::string &output_path) {
   std::ofstream ofs;
   ofs.exceptions(std::ios_base::badbit);
   ofs.open(output_path, std::ios_base::binary);
