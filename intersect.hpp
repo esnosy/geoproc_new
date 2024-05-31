@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include "aabb.hpp"
 #include "triangle.hpp"
 #include "vec.hpp"
@@ -8,5 +10,13 @@ struct Ray {
   Vec3 origin, direction;
 };
 
-bool does_intersect(const Ray &ray, const AABB &aabb);
-bool does_intersect(const Ray &ray, const Triangle &triangle);
+std::optional<float> intersect(const Ray &ray, const AABB &aabb);
+std::optional<float> intersect(const Ray &ray, const Triangle &triangle);
+
+inline bool does_intersect(const Ray &ray, const AABB &aabb) {
+  return intersect(ray, aabb).has_value();
+}
+
+inline bool does_intersect(const Ray &ray, const Triangle &triangle) {
+  return intersect(ray, triangle).has_value();
+}

@@ -15,21 +15,21 @@ constexpr float SIGN_TABLE[3][3] = {
 
 static bool is_zero(float value) { return std::abs(value) < 1e-9; }
 
-bool does_intersect(const Ray &ray, const AABB &aabb) {
+std::optional<float> intersect(const Ray &ray, const AABB &aabb) {
   float running_t_min = 0.0f;
   float running_t_max = RAY_MAX;
   for (int i = 0; i < 3; i++) {
     if (is_zero(ray.direction[i]) &&
         (ray.origin[i] < aabb.min[i] || ray.origin[i] > aabb.max[i]))
-      return false;
+      return std::nullopt;
     float t_min = (aabb.min[i] - ray.origin[i]) / ray.direction[i];
     float t_max = (aabb.max[i] - ray.origin[i]) / ray.direction[i];
-    if (t_min > running_t_max) return false;
-    if (t_max < running_t_min) return false;
+    if (t_min > running_t_max) return std::nullopt;
+    if (t_max < running_t_min) return std::nullopt;
     running_t_min = std::max(t_min, running_t_min);
     running_t_max = std::min(t_max, running_t_max);
   }
-  return true;
+  return running_t_min;
 }
 
 static float calculate_cofactor(const std::array<Vec3, 3> &columns,
@@ -88,24 +88,24 @@ static Vec3 transform(const std::array<Vec3, 3> &rows, const Vec3 &v) {
   };
 }
 
-bool does_intersect(const Ray &ray, const Triangle &triangle) {
+std::optional<float> intersect(const Ray &ray, const Triangle &triangle) {
   std::array<Vec3, 3> coefficients_matrix_columns = {
       triangle.b - triangle.a,
       triangle.c - triangle.a,
       -ray.direction,
   };
   auto inverse_rows = invert(coefficients_matrix_columns);
-  if (!inverse_rows.has_value()) return false;
+  if (!inverse_rows.has_value()) return std::nullopt;
   Vec3 constant_column = ray.origin - triangle.a;
   Vec3 result = transform(*inverse_rows, constant_column);
   float u = result.x;
   float v = result.y;
   float t = result.z;
-  if (u > 1.0f) return false;
-  if (u < 0.0f) return false;
-  if (v > 1.0f) return false;
-  if (v < 0.0f) return false;
-  if (t < 0.0f) return false;
-  if ((u + v) > 1.0f) return false;
-  return true;
+  if (u > 1.0f) return std::nullopt;
+  if (u < 0.0f) return std::nullopt;
+  if (v > 1.0f) return std::nullopt;
+  if (v < 0.0f) return std::nullopt;
+  if (t < 0.0f) return std::nullopt;
+  if ((u + v) > 1.0f) return std::nullopt;
+  return t;
 }
