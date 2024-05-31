@@ -5,14 +5,20 @@ find_package(OpenMP REQUIRED)
 
 option(GEOPROC_DISABLE_ASAN "" OFF)
 
+# We use generator expressions to only enable ASAN in "Release with debug info"
+# config and support multi-config generators like the Visual Studio generator
+# and Ninja Multiconfig, because ASAN is not compatible with Debug flags, nor is
+# it much useful in "Release" only mode without debug info
 if (NOT GEOPROC_DISABLE_ASAN)
     if (MSVC)
-        add_compile_options(/fsanitize=address)
-        add_link_options(/INCREMENTAL:NO) # Disable incremental linking because
-                                          # MSVC ASAN is not compatible with it.
+        add_compile_options($<$<CONFIG:RelWithDebInfo>:/fsanitize=address>)
+        # Disable incremental linking because MSVC ASAN is not compatible with
+        # it.
+        add_link_options($<$<CONFIG:RelWithDebInfo>:/INCREMENTAL:NO>)
     else ()
-        add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
-        add_link_options(-fsanitize=address)
+        add_compile_options($<$<CONFIG:RelWithDebInfo>:-fsanitize=address
+                            -fno-omit-frame-pointer>)
+        add_link_options($<$<CONFIG:RelWithDebInfo>:-fsanitize=address>)
     endif ()
 endif ()
 
