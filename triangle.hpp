@@ -25,4 +25,5 @@ struct Triangle {
     aabb.max = Vec3::max(a, Vec3::max(b, c));
     return aabb;
   }
+  Vec3 calc_normal() const { return (b - a).cross(c - a).normalized(); }
 };

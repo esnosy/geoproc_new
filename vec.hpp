@@ -23,6 +23,7 @@ struct Vec3 {
   }
   float dot(const Vec3 &v) const { return x * v.x + y * v.y + z * v.z; }
   float mag() const { return std::sqrt(x * x + y * y + z * z); }
+  Vec3 normalized() const { return *this / mag(); }
   static Vec3 max(const Vec3 &a, const Vec3 &b) {
     return Vec3(std::fmax(a.x, b.x), std::fmax(a.y, b.y), std::fmax(a.z, b.z));
   }

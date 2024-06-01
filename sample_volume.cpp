@@ -158,11 +158,60 @@ static size_t count_intersections(const Ray &r, const BVH_Tree &tree,
   return num_hits;
 }
 
+struct Closest_Hit_Result {
+  float t;
+  uint32_t triangle_index;
+};
+
+static std::optional<Closest_Hit_Result>
+closest_hit(const Ray &r, const BVH_Tree &tree,
+            const std::vector<Triangle> &tris) {
+  std::optional<Closest_Hit_Result> result;
+  std::stack<const BVH_Node *> stack;
+  stack.push(tree.get_root());
+  while (!stack.empty()) {
+    const BVH_Node *node = stack.top();
+    stack.pop();
+    if (!does_intersect(r, node->aabb)) continue;
+    if (!node->is_leaf()) {
+      stack.push(node->left);
+      stack.push(node->right);
+      continue;
+    }
+
+    for (uint32_t i = node->start; i < node->end; i++) {
+      uint32_t ti = tree.remap_index(i);
+      const Triangle &t = tris[ti];
+      auto hit = intersect(r, t);
+      if (!hit.has_value()) continue;
+      if (result.has_value()) {
+        if (hit.value() < result->t) {
+          result->t = hit.value();
+          result->triangle_index = ti;
+        }
+      } else {
+        result = Closest_Hit_Result{hit.value(), ti};
+      }
+    }
+  }
+  return result;
+}
+
 static bool is_point_in_volume(const Vec3 &p, const BVH_Tree &tree,
                                const std::vector<Triangle> &tris) {
   Ray r{p, Vec3(0, 0, 1)};
   size_t num_hits = count_intersections(r, tree, tris);
   return num_hits % 2 != 0;
+}
+
+static bool is_point_in_volume_2(const Vec3 &p, const BVH_Tree &tree,
+                                 const std::vector<Triangle> &tris) {
+  Ray r{p, Vec3(0, 0, 1)};
+  auto hit = closest_hit(r, tree, tris);
+  if (!hit.has_value()) return false;
+  const Triangle &t = tris[hit->triangle_index];
+  Vec3 n = t.calc_normal();
+  return n.dot(r.direction) > 0.0f;
 }
 
 int main(int argc, char **argv) {
@@ -220,7 +269,7 @@ int main(int argc, char **argv) {
   bool *is_in_volume = (bool *)malloc(num_points);
 #pragma omp parallel for
   for (long long i = 0; i < num_points; i++) {
-    is_in_volume[i] = is_point_in_volume(points[i], tree, tris);
+    is_in_volume[i] = is_point_in_volume_2(points[i], tree, tris);
   }
   auto t2 = std::chrono::high_resolution_clock::now();
   std::cout
