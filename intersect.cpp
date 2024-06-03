@@ -1,6 +1,7 @@
 #include <array>
 #include <cstdint>
 #include <optional>
+#include <utility>
 
 #include "intersect.hpp"
 #include "vec.hpp"
@@ -22,12 +23,21 @@ std::optional<float> intersect(const Ray &ray, const AABB &aabb) {
     if (is_zero(ray.direction[i]) &&
         (ray.origin[i] < aabb.min[i] || ray.origin[i] > aabb.max[i]))
       return std::nullopt;
-    float t_min = (aabb.min[i] - ray.origin[i]) / ray.direction[i];
-    float t_max = (aabb.max[i] - ray.origin[i]) / ray.direction[i];
+
+    float rdi = ray.direction[i];
+    float t_min = (aabb.min[i] - ray.origin[i]) / rdi;
+    float t_max = (aabb.max[i] - ray.origin[i]) / rdi;
+
+    // "If you multiply or divide each side by a negative quantity, the
+    // inequality symbol must be reversed."
+    // https://web.archive.org/web/20240603190734/https://mathcentre.ac.uk/resources/uploaded/mc-ty-inequalities-2009-1.pdf
+    if (rdi < 0.0f) std::swap(t_min, t_max);
+
     if (t_min > running_t_max) return std::nullopt;
     if (t_max < running_t_min) return std::nullopt;
     running_t_min = std::max(t_min, running_t_min);
     running_t_max = std::min(t_max, running_t_max);
+    assert(running_t_max > running_t_min);
   }
   return running_t_min;
 }
