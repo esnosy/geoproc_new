@@ -5,6 +5,8 @@ find_package(OpenMP REQUIRED)
 
 option(GEOPROC_DISABLE_ASAN "" OFF)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # We use generator expressions to only enable ASAN in "Release with debug info"
 # config and support multi-config generators like the Visual Studio generator
 # and Ninja Multiconfig, because ASAN is not compatible with Debug flags, nor is
