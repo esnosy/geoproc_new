@@ -18,6 +18,8 @@
 #include "vec.hpp"
 #include "write_ply.hpp"
 
+constexpr float PI = 3.1415927f;
+
 struct BVH_Node {
   AABB aabb;
   uint32_t start, end;
@@ -214,6 +216,21 @@ static bool is_point_in_volume_2(const Vec3 &p, const BVH_Tree &tree,
   return n.dot(r.direction) > 0.0f;
 }
 
+static bool is_point_in_volume_3(const Vec3 &p, const BVH_Tree &tree,
+                                 const std::vector<Triangle> &tris,
+                                 const std::vector<Vec3> &directions) {
+  size_t num_inside = 0;
+  for (const auto &d : directions) {
+    Ray r{p, d};
+    auto hit = closest_hit(r, tree, tris);
+    if (!hit.has_value()) continue;
+    const Triangle &t = tris[hit->triangle_index];
+    Vec3 n = t.calc_normal();
+    if (n.dot(r.direction) > 0.0f) num_inside++;
+  }
+  return num_inside >= (directions.size() / 2);
+}
+
 int main(int argc, char **argv) {
   if (argc != 5) {
     std::cerr << "Expected arguments: mesh.stl seed n output.ply" << std::endl;
@@ -264,12 +281,30 @@ int main(int argc, char **argv) {
     points.push_back(p);
   }
 
+  std::uniform_real_distribution<float> f_dist(0.0f, 1.0f);
+  // https://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations#fragment-SamplingFunctionDefinitions-5
+  auto sample_full_sphere = [&] {
+    float x = f_dist(prng_engine);
+    float y = f_dist(prng_engine);
+    float z = 1.0f - 2.0f * x;
+    float r = std::sqrt(std::max(0.0f, 1.0f - z * z));
+    float phi = 2 * PI * y;
+    return Vec3(r * std::cos(phi), r * std::sin(phi), z);
+  };
+
+  constexpr size_t num_directions = 10;
+  std::vector<Vec3> directions;
+  directions.reserve(num_directions);
+  for (size_t i = 0; i < num_directions; i++) {
+    directions.push_back(sample_full_sphere());
+  }
+
   std::cout << "Filtering points..." << std::endl;
   auto t1 = std::chrono::high_resolution_clock::now();
   bool *is_in_volume = (bool *)malloc(num_points);
 #pragma omp parallel for
   for (long long i = 0; i < num_points; i++) {
-    is_in_volume[i] = is_point_in_volume_2(points[i], tree, tris);
+    is_in_volume[i] = is_point_in_volume_3(points[i], tree, tris, directions);
   }
   auto t2 = std::chrono::high_resolution_clock::now();
   std::cout
