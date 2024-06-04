@@ -48,6 +48,10 @@ target_compile_features(sample_surface PRIVATE cxx_std_17)
 add_executable(fixed_point_demo fixed_point_demo.cpp)
 target_compile_features(fixed_point_demo PRIVATE cxx_std_17)
 
+add_executable(sample_cube sample_cube.cpp)
+target_link_libraries(sample_cube write_ply)
+target_compile_features(sample_cube PRIVATE cxx_std_17)
+
 include(CTest)
 
 add_executable(test_intersection intersect_test.cpp)
