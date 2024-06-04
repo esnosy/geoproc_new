@@ -292,7 +292,7 @@ int main(int argc, char **argv) {
     return Vec3(r * std::cos(phi), r * std::sin(phi), z);
   };
 
-  constexpr size_t num_directions = 10;
+  constexpr size_t num_directions = 2;
   std::vector<Vec3> directions;
   directions.reserve(num_directions);
   for (size_t i = 0; i < num_directions; i++) {
