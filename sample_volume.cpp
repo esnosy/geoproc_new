@@ -42,6 +42,8 @@ struct BVH_Node {
 class BVH_Tree {
 private:
   BVH_Node *root = nullptr;
+  BVH_Node *nodes_buffer = nullptr;
+  BVH_Node *current_free_node = nullptr;
   std::vector<uint32_t> map;
 
   static AABB join_aabbs(const std::vector<AABB> &aabs) {
@@ -64,6 +66,8 @@ private:
     return aabb;
   }
 
+  BVH_Node *new_node() { return current_free_node++; }
+
 public:
   // Memory is free in destructor, avoid double free by disabling copy and move
   BVH_Tree(const BVH_Tree &) = delete;
@@ -72,7 +76,12 @@ public:
   BVH_Tree &operator=(BVH_Tree &&) = delete;
 
   explicit BVH_Tree(const std::vector<AABB> &aabbs) {
-    root = new BVH_Node;
+    assert(!aabbs.empty());
+    // Number of nodes of full binary tree with n leaves is 2n - 1
+    nodes_buffer = new BVH_Node[aabbs.size() * 2 - 1];
+    current_free_node = nodes_buffer;
+
+    root = new_node();
     root->start = 0;
     root->end = aabbs.size();
     root->aabb = join_aabbs(aabbs);
@@ -101,14 +110,14 @@ public:
       }
       if (i == node->start || i == node->end) continue; // Partitioning failed
 
-      BVH_Node *left = new BVH_Node;
+      BVH_Node *left = new_node();
       left->start = node->start;
       left->end = i;
       left->aabb = join_aabbs(aabbs, map, left->start, left->end);
       node->left = left;
       stack.push(left);
 
-      BVH_Node *right = new BVH_Node;
+      BVH_Node *right = new_node();
       right->start = i;
       right->end = node->end;
       right->aabb = join_aabbs(aabbs, map, right->start, right->end);
@@ -125,17 +134,7 @@ public:
   const BVH_Node *get_root() const { return root; }
   const AABB &get_aabb() const { return root->aabb; }
 
-  ~BVH_Tree() {
-    std::stack<BVH_Node *> stack;
-    stack.push(root);
-    while (!stack.empty()) {
-      BVH_Node *node = stack.top();
-      stack.pop();
-      if (node->left) stack.push(node->left);
-      if (node->right) stack.push(node->right);
-      delete node;
-    }
-  }
+  ~BVH_Tree() { delete nodes_buffer; }
 };
 
 static size_t count_intersections(const Ray &r, const BVH_Tree &tree,
