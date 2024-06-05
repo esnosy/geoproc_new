@@ -66,7 +66,11 @@ private:
     return aabb;
   }
 
-  BVH_Node *new_node() { return current_free_node++; }
+  BVH_Node *new_node() {
+    BVH_Node *result = current_free_node++;
+    *result = BVH_Node();
+    return result;
+  }
 
 public:
   // Memory is free in destructor, avoid double free by disabling copy and move
@@ -78,7 +82,8 @@ public:
   explicit BVH_Tree(const std::vector<AABB> &aabbs) {
     assert(!aabbs.empty());
     // Number of nodes of full binary tree with n leaves is 2n - 1
-    nodes_buffer = new BVH_Node[aabbs.size() * 2 - 1];
+    nodes_buffer =
+        (BVH_Node *)malloc(sizeof(BVH_Node) * (aabbs.size() * 2 - 1));
     current_free_node = nodes_buffer;
 
     root = new_node();
@@ -134,7 +139,7 @@ public:
   const BVH_Node *get_root() const { return root; }
   const AABB &get_aabb() const { return root->aabb; }
 
-  ~BVH_Tree() { delete nodes_buffer; }
+  ~BVH_Tree() { free(nodes_buffer); }
 };
 
 static size_t count_intersections(const Ray &r, const BVH_Tree &tree,
