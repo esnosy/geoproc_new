@@ -180,20 +180,13 @@ closest_hit(const Ray &r, const BVH_Tree &tree,
       stack.push(node->right);
       continue;
     }
-
     for (uint32_t i = node->start; i < node->end; i++) {
       uint32_t ti = tree.remap_index(i);
       const Triangle &t = tris[ti];
       auto hit = intersect(r, t);
       if (!hit.has_value()) continue;
-      if (result.has_value()) {
-        if (hit.value() < result->t) {
-          result->t = hit.value();
-          result->triangle_index = ti;
-        }
-      } else {
-        result = Closest_Hit_Result{hit.value(), ti};
-      }
+      if (!result.has_value() || hit.value() < result->t)
+        result = {hit.value(), ti};
     }
   }
   return result;
