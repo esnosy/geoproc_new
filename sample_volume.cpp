@@ -317,4 +317,5 @@ int main(int argc, char **argv) {
   std::cout << "Writing ply..." << std::endl;
   write_ply(filtered_points, output_filepath);
   std::cout << "Success" << std::endl;
+  return 0;
 }
