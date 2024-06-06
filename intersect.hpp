@@ -5,10 +5,7 @@
 #include "aabb.hpp"
 #include "triangle.hpp"
 #include "vec.hpp"
-
-struct Ray {
-  Vec3 origin, direction;
-};
+#include "ray.hpp"
 
 std::optional<float> intersect(const Ray &ray, const AABB &aabb);
 std::optional<float> intersect(const Ray &ray, const Triangle &triangle);
