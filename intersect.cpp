@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "intersect.hpp"
+#include "math.hpp"
 #include "vec.hpp"
 
 constexpr float RAY_MAX = 1682001.0f;
@@ -13,8 +14,6 @@ constexpr float SIGN_TABLE[3][3] = {
     {-1, 1, -1},
     {1, -1, 1},
 };
-
-static bool is_zero(float value) { return std::abs(value) < 1e-9; }
 
 std::optional<float> intersect(const Ray &ray, const AABB &aabb) {
   float running_t_min = 0.0f;
