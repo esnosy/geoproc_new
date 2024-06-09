@@ -73,7 +73,8 @@ private:
   }
 
 public:
-  // Memory is freed in destructor, avoid double free by disabling copy and move
+  // Memory is freed in destructor, avoid double free and freeing nullptr by
+  // disabling copy and move
   BVH_Tree(const BVH_Tree &) = delete;
   BVH_Tree(BVH_Tree &&) = delete;
   BVH_Tree &operator=(const BVH_Tree &) = delete;
