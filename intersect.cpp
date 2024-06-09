@@ -5,6 +5,7 @@
 
 #include "intersect.hpp"
 #include "math.hpp"
+#include "segment.hpp"
 #include "vec.hpp"
 
 constexpr float RAY_MAX = 1682001.0f;
@@ -15,9 +16,9 @@ constexpr float SIGN_TABLE[3][3] = {
     {1, -1, 1},
 };
 
-std::optional<float> intersect(const Ray &ray, const AABB &aabb) {
+std::optional<float> intersect(const Ray &ray, const AABB &aabb,
+                               float running_t_max = RAY_MAX) {
   float running_t_min = 0.0f;
-  float running_t_max = RAY_MAX;
   for (int i = 0; i < 3; i++) {
     if (is_zero(ray.direction[i]) &&
         (ray.origin[i] < aabb.min[i] || ray.origin[i] > aabb.max[i]))
@@ -39,6 +40,10 @@ std::optional<float> intersect(const Ray &ray, const AABB &aabb) {
     assert(running_t_max > running_t_min);
   }
   return running_t_min;
+}
+
+bool does_intersect(const Segment &s, const AABB &aabb) {
+  return intersect(Ray{s.a, s.b - s.a}, aabb, 1.0f).has_value();
 }
 
 static float calculate_cofactor(const std::array<Vec3, 3> &columns,
