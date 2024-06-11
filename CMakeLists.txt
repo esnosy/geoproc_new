@@ -36,6 +36,9 @@ target_compile_features(intersect PRIVATE cxx_std_17)
 add_library(distance distance.cpp)
 target_compile_features(distance PRIVATE cxx_std_17)
 
+add_library(bvh bvh.cpp)
+target_compile_features(bvh PRIVATE cxx_std_17)
+
 add_executable(sample_volume sample_volume.cpp)
 target_link_libraries(sample_volume mesh_io write_ply intersect
                       OpenMP::OpenMP_CXX)
@@ -51,6 +54,10 @@ target_compile_features(fixed_point_demo PRIVATE cxx_std_17)
 add_executable(sample_cube sample_cube.cpp)
 target_link_libraries(sample_cube write_ply)
 target_compile_features(sample_cube PRIVATE cxx_std_17)
+
+add_executable(delaunay delaunay.cpp)
+target_link_libraries(delaunay bvh)
+target_compile_features(delaunay PRIVATE cxx_std_17)
 
 include(CTest)
 
