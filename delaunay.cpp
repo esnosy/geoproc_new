@@ -7,7 +7,12 @@
 #include <utility>
 #include <vector>
 
+#include "bvh.hpp"
+#include "distance.hpp"
 #include "vec.hpp"
+
+#include <optional>
+#include <stack>
 
 struct RGB : std::array<uint8_t, 3> {
   uint8_t &r() { return (*this)[0]; }
@@ -89,6 +94,60 @@ static void draw_line(Image &image, int sx, int sy, int ex, int ey,
   }
 }
 
+struct Closest_Point_Result {
+  uint32_t i;
+  float t;
+};
+
+static std::optional<Closest_Point_Result>
+closest_point(const Vec3 &p, const std::vector<Vec3> &points,
+              const BVH_Tree &bvh) {
+  std::optional<Closest_Point_Result> result;
+  std::stack<const BVH_Node *> stack;
+  stack.push(bvh.get_root());
+  while (!stack.empty()) {
+    const BVH_Node *node = stack.top();
+    stack.pop();
+    if (!node->is_leaf()) {
+      // Desend into closest AABB
+      float ld = distance_to_volume(p, node->left->aabb);
+      float rd = distance_to_volume(p, node->right->aabb);
+      stack.push((ld < rd) ? node->left : node->right);
+      continue;
+    }
+    for (uint32_t i = node->start; i < node->end; i++) {
+      uint32_t pi = bvh.remap_index(i);
+      const Vec3 &other_p = points[pi];
+      float t = p.dist(other_p);
+      if (!result.has_value() || t < result->t) result = {pi, t};
+    }
+  }
+  if (!result.has_value()) return std::nullopt;
+
+  // Second pass to ensure closest point
+  stack.push(bvh.get_root());
+  while (!stack.empty()) {
+    const BVH_Node *node = stack.top();
+    stack.pop();
+    if (!node->is_leaf()) {
+      // Desend into closest AABB
+      float ld = distance_to_volume(p, node->left->aabb);
+      float rd = distance_to_volume(p, node->right->aabb);
+      if (ld < result->t) distance_to_volume(p, node->left->aabb);
+      if (rd < result->t) distance_to_volume(p, node->right->aabb);
+      continue;
+    }
+    for (uint32_t i = node->start; i < node->end; i++) {
+      uint32_t pi = bvh.remap_index(i);
+      const Vec3 &other_p = points[pi];
+      float t = p.dist(other_p);
+      if (t < result->t) result = {pi, t};
+    }
+  }
+
+  return result;
+}
+
 int main() {
   int seed = 1234;
   int width = 1280;
@@ -107,6 +166,12 @@ int main() {
     points.push_back(p);
   }
 
+  std::vector<AABB> aabbs;
+  aabbs.reserve(num_points);
+  for (const Vec3 &p : points) aabbs.emplace_back(p, p);
+
+  BVH_Tree bvh(aabbs);
+
   // Render points
   Image image(width, height);
   for (const Vec3 &p : points) {
@@ -114,7 +179,20 @@ int main() {
     int y = (int)std::floor(p.y);
     draw_circle(image, x, y, 5, RGB(255, 255, 255));
   }
-  draw_line(image, 0, 0, width - 1, height - 1, RGB(255, 0, 0));
+
+  Vec3 p(x_dist(e), y_dist(e), 0.0f);
+  draw_circle(image, (int)std::floor(p.x), (int)std::floor(p.y), 5,
+              RGB(0, 0, 255));
+
+  auto result = closest_point(p, points, bvh);
+  if (!result.has_value()) {
+    std::cerr << "Failed to find closest point" << std::endl;
+    return 1;
+  }
+  const Vec3 cp = points[result->i];
+
+  draw_line(image, (int)std::floor(p.x), (int)std::floor(p.y),
+            (int)std::floor(cp.x), (int)std::floor(cp.y), RGB(255, 0, 0));
   image.write_ppm("points.ppm");
   return 0;
 }

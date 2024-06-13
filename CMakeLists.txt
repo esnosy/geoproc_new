@@ -56,7 +56,7 @@ target_link_libraries(sample_cube write_ply)
 target_compile_features(sample_cube PRIVATE cxx_std_17)
 
 add_executable(delaunay delaunay.cpp)
-target_link_libraries(delaunay bvh)
+target_link_libraries(delaunay bvh distance)
 target_compile_features(delaunay PRIVATE cxx_std_17)
 
 include(CTest)
