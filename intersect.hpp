@@ -8,7 +8,10 @@
 #include "triangle.hpp"
 #include "vec.hpp"
 
-std::optional<float> intersect(const Ray &ray, const AABB &aabb);
+constexpr float RAY_MAX = 1682001.0f;
+
+std::optional<float> intersect(const Ray &ray, const AABB &aabb,
+                               float running_t_max = RAY_MAX);
 std::optional<float> intersect(const Ray &ray, const Triangle &triangle);
 
 inline bool does_intersect(const Ray &ray, const AABB &aabb) {

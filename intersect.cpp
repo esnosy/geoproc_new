@@ -8,8 +8,6 @@
 #include "segment.hpp"
 #include "vec.hpp"
 
-constexpr float RAY_MAX = 1682001.0f;
-
 constexpr float SIGN_TABLE[3][3] = {
     {1, -1, 1},
     {-1, 1, -1},
@@ -17,7 +15,7 @@ constexpr float SIGN_TABLE[3][3] = {
 };
 
 std::optional<float> intersect(const Ray &ray, const AABB &aabb,
-                               float running_t_max = RAY_MAX) {
+                               float running_t_max) {
   float running_t_min = 0.0f;
   for (int i = 0; i < 3; i++) {
     if (is_zero(ray.direction[i]) &&
