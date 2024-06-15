@@ -109,7 +109,7 @@ closest_point(const Vec3 &p, const std::vector<Vec3> &points,
     const BVH_Node *node = stack.top();
     stack.pop();
     if (!node->is_leaf()) {
-      // Desend into closest AABB
+      // Pick closest AABB
       float ld = distance_to_volume(p, node->left->aabb);
       float rd = distance_to_volume(p, node->right->aabb);
       stack.push((ld < rd) ? node->left : node->right);
