@@ -147,6 +147,16 @@ closest_point(const Vec3 &p, const std::vector<Vec3> &points,
   return result;
 }
 
+static void draw_point(Image &image, const Vec3 &p) {
+  draw_circle(image, (int)std::floor(p.x), (int)std::floor(p.y), 5,
+              RGB(255, 255, 255));
+}
+
+static void draw_line(Image &image, const Vec3 &start, const Vec3 &end) {
+  draw_line(image, (int)std::floor(start.x), (int)std::floor(start.y),
+            (int)std::floor(end.x), (int)std::floor(end.y), RGB(255, 0, 0));
+}
+
 int main() {
   int seed = 1234;
   int width = 1280;
@@ -173,15 +183,10 @@ int main() {
 
   // Render points
   Image image(width, height);
-  for (const Vec3 &p : points) {
-    int x = (int)std::floor(p.x);
-    int y = (int)std::floor(p.y);
-    draw_circle(image, x, y, 5, RGB(255, 255, 255));
-  }
+  for (const Vec3 &p : points) draw_point(image, p);
 
   Vec3 p(x_dist(e), y_dist(e), 0.0f);
-  draw_circle(image, (int)std::floor(p.x), (int)std::floor(p.y), 5,
-              RGB(0, 0, 255));
+  draw_point(image, p);
 
   auto result = closest_point(p, points, bvh);
   if (!result.has_value()) {
@@ -189,9 +194,7 @@ int main() {
     return 1;
   }
   const Vec3 cp = points[result->i];
-
-  draw_line(image, (int)std::floor(p.x), (int)std::floor(p.y),
-            (int)std::floor(cp.x), (int)std::floor(cp.y), RGB(255, 0, 0));
+  draw_line(image, p, cp);
   image.write_ppm("points.ppm");
   return 0;
 }
