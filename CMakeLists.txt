@@ -10,7 +10,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # We use generator expressions to only enable ASAN in "Release with debug info"
 # config and support multi-config generators like the Visual Studio generator
 # and Ninja Multiconfig, because ASAN is not compatible with Debug flags, nor is
-# it much useful in "Release" only mode without debug info
+# it much useful in "Release" only mode without debug info,
+# and because CMAKE_BUILD_TYPE does not get populated automatically when using a multi-config generator
+# we use generator expressions
 if (NOT GEOPROC_DISABLE_ASAN)
     if (MSVC)
         add_compile_options($<$<CONFIG:RelWithDebInfo>:/fsanitize=address>)
