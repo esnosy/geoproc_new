@@ -23,3 +23,4 @@ inline bool does_intersect(const Ray &ray, const Triangle &triangle) {
 }
 
 bool does_intersect(const Segment &s, const AABB &aabb);
+bool does_intersect(const Triangle &t, const AABB &aabb);

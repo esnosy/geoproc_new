@@ -44,6 +44,47 @@ bool does_intersect(const Segment &s, const AABB &aabb) {
   return intersect(Ray{s.a, s.b - s.a}, aabb, 1.0f).has_value();
 }
 
+static bool is_projected_inside(const Vec3 &p, const Triangle &t) {
+  Vec3 ap = p - t.a;
+  float u = ap.dot(t.b - t.a);
+  float v = ap.dot(t.c - t.a);
+  if (u < 0.0f) return false;
+  if (u > 1.0f) return false;
+  if (v < 0.0f) return false;
+  if (v > 1.0f) return false;
+  if ((u + v) > 1.0f) return false;
+  return true;
+}
+
+static bool is_inside(const Vec3 &p, const AABB &aabb) {
+  if (p.x < aabb.min.x) return false;
+  if (p.y < aabb.min.y) return false;
+  if (p.z < aabb.min.z) return false;
+  if (p.x > aabb.max.x) return false;
+  if (p.y > aabb.max.y) return false;
+  if (p.z > aabb.max.z) return false;
+  return true;
+}
+
+bool does_intersect(const Triangle &t, const AABB &aabb) {
+  // Check if any of the triangle's vertices are inside the AABB
+  if (is_inside(t.a, aabb)) return true;
+  if (is_inside(t.b, aabb)) return true;
+  if (is_inside(t.c, aabb)) return true;
+
+  // Check if any of the AABB's vertices, when projected, are inside the
+  // triangle
+  for (const Vec3 &vertex : aabb.vertices())
+    if (is_projected_inside(vertex, t)) return true;
+
+  // Check if any of the triangle's edges intersect the AABB
+  if (does_intersect(Segment{t.a, t.b}, aabb)) return true;
+  if (does_intersect(Segment{t.b, t.c}, aabb)) return true;
+  if (does_intersect(Segment{t.c, t.a}, aabb)) return true;
+
+  return false;
+}
+
 static float calculate_cofactor(const std::array<Vec3, 3> &columns,
                                 uint8_t cofactor_row, uint8_t cofactor_column) {
   float minor_rows[2][2];
