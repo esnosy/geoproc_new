@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "aabb.hpp"
+#include "bvh.hpp"
 #include "intersect.hpp"
 #include "mesh_io.hpp"
 #include "triangle.hpp"
@@ -19,129 +20,6 @@
 #include "write_ply.hpp"
 
 constexpr float PI = 3.1415927f;
-
-struct BVH_Node {
-  AABB aabb;
-  uint32_t start, end;
-  BVH_Node *right, *left;
-  BVH_Node() {
-    start = 0;
-    end = 0;
-    right = nullptr;
-    left = nullptr;
-  }
-
-  uint32_t num_primitives() const {
-    assert(end >= start);
-    return end - start;
-  }
-
-  bool is_leaf() const { return left == nullptr && right == nullptr; }
-};
-
-class BVH_Tree {
-private:
-  BVH_Node *root = nullptr;
-  BVH_Node *nodes_buffer = nullptr;
-  BVH_Node *current_free_node = nullptr;
-  std::vector<uint32_t> map;
-
-  static AABB join_aabbs(const std::vector<AABB> &aabs) {
-    AABB aabb = aabs[0];
-    for (size_t i = 1; i < aabs.size(); i++) {
-      aabb.min = Vec3::min(aabb.min, aabs[i].min);
-      aabb.max = Vec3::max(aabb.max, aabs[i].max);
-    }
-    return aabb;
-  }
-
-  static AABB join_aabbs(const std::vector<AABB> &aabs,
-                         const std::vector<uint32_t> &map, uint32_t start,
-                         uint32_t end) {
-    AABB aabb = aabs[map[start]];
-    for (uint32_t i = start + 1; i < end; i++) {
-      aabb.min = Vec3::min(aabb.min, aabs[map[i]].min);
-      aabb.max = Vec3::max(aabb.max, aabs[map[i]].max);
-    }
-    return aabb;
-  }
-
-  BVH_Node *new_node() {
-    BVH_Node *result = current_free_node++;
-    *result = BVH_Node();
-    return result;
-  }
-
-public:
-  // Memory is freed in destructor, avoid double free and freeing nullptr by
-  // disabling copy and move
-  BVH_Tree(const BVH_Tree &) = delete;
-  BVH_Tree(BVH_Tree &&) = delete;
-  BVH_Tree &operator=(const BVH_Tree &) = delete;
-  BVH_Tree &operator=(BVH_Tree &&) = delete;
-
-  explicit BVH_Tree(const std::vector<AABB> &aabbs) {
-    assert(!aabbs.empty());
-    // Number of nodes of full binary tree with n leaves is 2n - 1
-    nodes_buffer =
-        (BVH_Node *)malloc(sizeof(BVH_Node) * (aabbs.size() * 2 - 1));
-    current_free_node = nodes_buffer;
-
-    root = new_node();
-    root->start = 0;
-    root->end = aabbs.size();
-    root->aabb = join_aabbs(aabbs);
-
-    // Initialize indices map
-    map.reserve(aabbs.size());
-    for (uint32_t i = 0; i < aabbs.size(); i++) map.push_back(i);
-
-    std::stack<BVH_Node *> stack;
-    stack.push(root);
-    while (!stack.empty()) {
-      BVH_Node *node = stack.top();
-      stack.pop();
-      if (node->num_primitives() == 1) continue;
-      Vec3 extent = node->aabb.calc_extent();
-      uint8_t split_axis = 0;
-      if (extent.y > extent.x) split_axis = 1;
-      if (extent.z > extent[split_axis]) split_axis = 2;
-      float split_pos =
-          node->aabb.min[split_axis] * 0.5f + node->aabb.max[split_axis] * 0.5f;
-      uint32_t i = node->start;
-      uint32_t j = node->end;
-      while (i < j) {
-        if (aabbs[map[j - 1]].calc_center()[split_axis] > split_pos) j--;
-        else std::swap(map[j - 1], map[i++]);
-      }
-      if (i == node->start || i == node->end) continue; // Partitioning failed
-
-      BVH_Node *left = new_node();
-      left->start = node->start;
-      left->end = i;
-      left->aabb = join_aabbs(aabbs, map, left->start, left->end);
-      node->left = left;
-      stack.push(left);
-
-      BVH_Node *right = new_node();
-      right->start = i;
-      right->end = node->end;
-      right->aabb = join_aabbs(aabbs, map, right->start, right->end);
-      node->right = right;
-      stack.push(right);
-    }
-  }
-  // Remap an index stored in a BVH node to an valid index in the primitives
-  // array
-  uint32_t remap_index(uint32_t i) const {
-    assert(i < map.size());
-    return map[i];
-  }
-  const BVH_Node *get_root() const { return root; }
-  const AABB &get_aabb() const { return root->aabb; }
-
-  ~BVH_Tree() { free(nodes_buffer); }
-};
 
 static size_t count_intersections(const Ray &r, const BVH_Tree &tree,
                                   const std::vector<Triangle> &tris) {
