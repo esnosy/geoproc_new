@@ -161,7 +161,7 @@ int main() {
   int seed = 1234;
   int width = 1280;
   int height = 720;
-  int num_points = 100;
+  int num_points = 10;
 
   std::mt19937 e(seed);
   std::uniform_real_distribution<float> x_dist(0.0f, (float)width);
