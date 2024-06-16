@@ -1,6 +1,7 @@
 #include <stack>
 
 #include "bvh.hpp"
+#include "distance.hpp"
 
 BVH_Tree::BVH_Tree(const std::vector<AABB> &aabbs) {
   assert(!aabbs.empty());
@@ -51,4 +52,52 @@ BVH_Tree::BVH_Tree(const std::vector<AABB> &aabbs) {
     node->right = right;
     stack.push(right);
   }
+}
+
+std::optional<Closest_Point_Result>
+closest_point(const Vec3 &p, const std::vector<Vec3> &points,
+              const BVH_Tree &bvh) {
+  std::optional<Closest_Point_Result> result;
+  std::stack<const BVH_Node *> stack;
+  stack.push(bvh.get_root());
+  while (!stack.empty()) {
+    const BVH_Node *node = stack.top();
+    stack.pop();
+    if (!node->is_leaf()) {
+      // Pick closest AABB
+      float ld = distance_to_volume(p, node->left->aabb);
+      float rd = distance_to_volume(p, node->right->aabb);
+      stack.push((ld < rd) ? node->left : node->right);
+      continue;
+    }
+    for (uint32_t i = node->start; i < node->end; i++) {
+      uint32_t pi = bvh.remap_index(i);
+      const Vec3 &other_p = points[pi];
+      float t = p.dist(other_p);
+      if (!result.has_value() || t < result->t) result = {pi, t};
+    }
+  }
+  if (!result.has_value()) return std::nullopt;
+
+  // Second pass to ensure closest point
+  stack.push(bvh.get_root());
+  while (!stack.empty()) {
+    const BVH_Node *node = stack.top();
+    stack.pop();
+    if (!node->is_leaf()) {
+      float ld = distance_to_volume(p, node->left->aabb);
+      float rd = distance_to_volume(p, node->right->aabb);
+      if (ld < result->t) distance_to_volume(p, node->left->aabb);
+      if (rd < result->t) distance_to_volume(p, node->right->aabb);
+      continue;
+    }
+    for (uint32_t i = node->start; i < node->end; i++) {
+      uint32_t pi = bvh.remap_index(i);
+      const Vec3 &other_p = points[pi];
+      float t = p.dist(other_p);
+      if (t < result->t) result = {pi, t};
+    }
+  }
+
+  return result;
 }

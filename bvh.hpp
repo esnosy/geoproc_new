@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <vector>
 
 #include "aabb.hpp"
@@ -73,3 +74,12 @@ public:
 
   ~BVH_Tree() { free(nodes_buffer); }
 };
+
+struct Closest_Point_Result {
+  uint32_t i;
+  float t;
+};
+
+std::optional<Closest_Point_Result>
+closest_point(const Vec3 &p, const std::vector<Vec3> &points,
+              const BVH_Tree &bvh);
