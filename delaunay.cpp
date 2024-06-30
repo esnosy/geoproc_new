@@ -1,12 +1,18 @@
+#include <algorithm>
 #include <array>
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <fstream>
+#include <functional>
+#include <optional>
+#include <queue>
 #include <random>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "bvh.hpp"
 #include "distance.hpp"
 #include "vec.hpp"
 
@@ -90,41 +96,124 @@ static void draw_line(Image &image, int sx, int sy, int ex, int ey,
   }
 }
 
-static void draw_point(Image &image, const Vec3 &p) {
-  draw_circle(image, (int)std::floor(p.x), (int)std::floor(p.y), 5,
-              RGB(255, 255, 255));
+static void draw_point(Image &image, const Vec3 &p, RGB color) {
+  draw_circle(image, (int)std::floor(p.x), (int)std::floor(p.y), 1, color);
 }
 
-static void draw_line(Image &image, const Vec3 &start, const Vec3 &end) {
-  draw_line(image, (int)std::floor(start.x), (int)std::floor(start.y),
-            (int)std::floor(end.x), (int)std::floor(end.y), RGB(255, 0, 0));
+static void draw_points(Image &image, const std::vector<Vec3> &points,
+                        RGB color) {
+  for (const Vec3 &p : points) draw_point(image, p, color);
 }
+
+static void draw_line(Image &image, const Vec3 &start, const Vec3 &end,
+                      RGB color) {
+  draw_line(image, (int)std::floor(start.x), (int)std::floor(start.y),
+            (int)std::floor(end.x), (int)std::floor(end.y), color);
+}
+
+namespace Closest_Point {
+struct Closest_Point_Result {
+  uint32_t i;
+  float distance;
+};
+
+struct Queue_Item {
+  const BVH_Node *node;
+  float distance;
+  bool operator>(const Queue_Item &other) const {
+    return distance > other.distance;
+  }
+};
+
+std::optional<Closest_Point_Result>
+closest_point(const Vec3 &p, const std::vector<Vec3> &points,
+              const BVH_Tree &bvh) {
+  std::optional<Closest_Point_Result> result;
+  std::priority_queue<Queue_Item, std::vector<Queue_Item>, std::greater<>>
+      queue;
+  const BVH_Node *root = bvh.get_root();
+  queue.push({root, distance_to_volume(p, root->aabb)});
+
+  while (!queue.empty()) {
+    auto [node, d] = queue.top();
+    queue.pop();
+
+    if (result.has_value() && d > result->distance) {
+      continue;
+    }
+
+    if (!node->is_leaf()) {
+      float dl = distance_to_volume(p, node->left->aabb);
+      float dr = distance_to_volume(p, node->right->aabb);
+
+      queue.push({node->left, dl});
+      queue.push({node->right, dr});
+      continue;
+    }
+
+    for (uint32_t i = node->start; i < node->end; i++) {
+      uint32_t real_i = bvh.remap_index(i);
+      const Vec3 &other = points[real_i];
+      float t = other.dist(p);
+      if (!result.has_value() || t < result->distance) {
+        result = Closest_Point_Result{real_i, t};
+      }
+    }
+  }
+
+  return result;
+}
+} // namespace Closest_Point
 
 int main() {
   int seed = 1234;
   int width = 1280;
   int height = 720;
-  int num_points = 10;
+  int num_points = 100000;
 
   std::mt19937 e(seed);
   std::uniform_real_distribution<float> x_dist(0.0f, (float)width);
   std::uniform_real_distribution<float> y_dist(0.0f, (float)height);
 
   // Generate random points
-  std::vector<Vec3> points;
-  points.reserve(num_points);
+  std::vector<Vec3> points_a;
+  points_a.reserve(num_points);
   for (int i = 0; i < num_points; i++) {
     Vec3 p(x_dist(e), y_dist(e), 0.0f);
-    points.push_back(p);
+    points_a.push_back(p);
   }
 
   std::vector<AABB> aabbs;
   aabbs.reserve(num_points);
-  for (const Vec3 &p : points) aabbs.emplace_back(p, p);
+  for (const Vec3 &p : points_a) aabbs.emplace_back(p, p);
 
-  // Render points
+  BVH_Tree bvh(aabbs);
+
   Image image(width, height);
-  for (const Vec3 &p : points) draw_point(image, p);
+
+  std::vector<Vec3> points_b;
+  points_b.reserve(num_points);
+  for (int i = 0; i < num_points; i++) {
+    Vec3 p(x_dist(e), y_dist(e), 0.0f);
+    points_b.push_back(p);
+  }
+
+  int64_t t = 0;
+  for (const Vec3 &p : points_b) {
+    auto t0 = std::chrono::high_resolution_clock::now();
+    auto cp = Closest_Point::closest_point(p, points_a, bvh);
+    auto t1 = std::chrono::high_resolution_clock::now();
+    t += std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
+    if (cp.has_value()) draw_line(image, p, points_a[cp->i], RGB(0, 255, 0));
+  }
+
+  std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::nanoseconds(t))
+                   .count()
+            << std::endl;
+
+  draw_points(image, points_a, RGB(255, 0, 0));
+  draw_points(image, points_b, RGB(0, 0, 255));
 
   image.write_ppm("points.ppm");
   return 0;
