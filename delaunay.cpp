@@ -125,9 +125,33 @@ struct Queue_Item {
   }
 };
 
+// FIXMEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+bool is_outside_half_spaces(const Vec3 &p, const std::vector<Vec3> &points,
+                            const std::vector<uint32_t> &adj_list) {
+  if (adj_list.empty()) return false;
+  for (uint32_t i : adj_list) {
+    const Vec3 &other = points[i];
+    Vec3 plane_normal = (other - p).normalized();
+    Vec3 plane_point = p * 0.5f + other * 0.5f;
+    if ((p - plane_point).normalized().dot(plane_normal) > 0.0f) return true;
+  }
+  return false;
+}
+
+// FIXMEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+bool is_outside_half_spaces(const AABB &aabb, const std::vector<Vec3> &points,
+                            const std::vector<uint32_t> &adj_list) {
+  for (const Vec3 &p : aabb.vertices()) {
+    if (!is_outside_half_spaces(p, points, adj_list)) return false;
+  }
+  return true;
+}
+
 std::optional<Closest_Point_Result>
-closest_point(const Vec3 &p, const std::vector<Vec3> &points,
-              const BVH_Tree &bvh) {
+closest_point(uint32_t pi, const std::vector<Vec3> &points, const BVH_Tree &bvh,
+              const std::vector<uint32_t> &adj_list) {
+
+  const Vec3 &p = points[pi];
   std::optional<Closest_Point_Result> result;
   std::priority_queue<Queue_Item, std::vector<Queue_Item>, std::greater<>>
       queue;
@@ -142,6 +166,8 @@ closest_point(const Vec3 &p, const std::vector<Vec3> &points,
       continue;
     }
 
+    // if (is_outside_half_spaces(node->aabb, points, adj_list)) continue;
+
     if (!node->is_leaf()) {
       float dl = distance_to_volume(p, node->left->aabb);
       float dr = distance_to_volume(p, node->right->aabb);
@@ -153,7 +179,9 @@ closest_point(const Vec3 &p, const std::vector<Vec3> &points,
 
     for (uint32_t i = node->start; i < node->end; i++) {
       uint32_t real_i = bvh.remap_index(i);
+      if (pi == real_i) continue;
       const Vec3 &other = points[real_i];
+      // if (is_outside_half_spaces(other, points, adj_list)) continue;
       float t = other.dist(p);
       if (!result.has_value() || t < result->distance) {
         result = Closest_Point_Result{real_i, t};
@@ -167,8 +195,8 @@ closest_point(const Vec3 &p, const std::vector<Vec3> &points,
 
 int main() {
   int seed = 1234;
-  int width = 1280;
-  int height = 720;
+  int width = 1920;
+  int height = 1080;
   int num_points = 100000;
 
   std::mt19937 e(seed);
@@ -176,44 +204,43 @@ int main() {
   std::uniform_real_distribution<float> y_dist(0.0f, (float)height);
 
   // Generate random points
-  std::vector<Vec3> points_a;
-  points_a.reserve(num_points);
+  std::vector<Vec3> points;
+  points.reserve(num_points);
   for (int i = 0; i < num_points; i++) {
     Vec3 p(x_dist(e), y_dist(e), 0.0f);
-    points_a.push_back(p);
+    points.push_back(p);
   }
 
+  // Build BVH
   std::vector<AABB> aabbs;
   aabbs.reserve(num_points);
-  for (const Vec3 &p : points_a) aabbs.emplace_back(p, p);
-
+  for (const Vec3 &p : points) aabbs.emplace_back(p, p);
   BVH_Tree bvh(aabbs);
+
+  // Compute delaunay triangulation
+  std::vector<std::vector<uint32_t>> adj_lists;
+  adj_lists.resize(points.size());
+  for (uint32_t i = 0; i < points.size(); i++) {
+    // while (true) {
+    auto cp = Closest_Point::closest_point(i, points, bvh, adj_lists[i]);
+    if (!cp.has_value()) continue;
+    adj_lists[i].push_back(cp->i);
+    adj_lists[cp->i].push_back(i);
+    // }
+  }
+
+  // Render result
 
   Image image(width, height);
 
-  std::vector<Vec3> points_b;
-  points_b.reserve(num_points);
-  for (int i = 0; i < num_points; i++) {
-    Vec3 p(x_dist(e), y_dist(e), 0.0f);
-    points_b.push_back(p);
+  for (uint32_t i = 0; i < adj_lists.size(); i++) {
+    for (uint32_t j : adj_lists[i]) {
+      if (j < i) continue;
+      draw_line(image, points[i], points[j], RGB(0, 255, 0));
+    }
   }
 
-  int64_t t = 0;
-  for (const Vec3 &p : points_b) {
-    auto t0 = std::chrono::high_resolution_clock::now();
-    auto cp = Closest_Point::closest_point(p, points_a, bvh);
-    auto t1 = std::chrono::high_resolution_clock::now();
-    t += std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
-    if (cp.has_value()) draw_line(image, p, points_a[cp->i], RGB(0, 255, 0));
-  }
-
-  std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(
-                   std::chrono::nanoseconds(t))
-                   .count()
-            << std::endl;
-
-  draw_points(image, points_a, RGB(255, 0, 0));
-  draw_points(image, points_b, RGB(0, 0, 255));
+  draw_points(image, points, RGB(255, 0, 0));
 
   image.write_ppm("points.ppm");
   return 0;
