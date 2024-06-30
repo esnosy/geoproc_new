@@ -58,9 +58,17 @@ add_executable(sample_cube sample_cube.cpp)
 target_link_libraries(sample_cube write_ply)
 target_compile_features(sample_cube PRIVATE cxx_std_17)
 
+add_executable(mesh_boolean mesh_boolean.cpp)
+target_link_libraries(mesh_boolean mesh_io intersect bvh)
+target_compile_features(mesh_boolean PRIVATE cxx_std_17)
+
 add_executable(delaunay delaunay.cpp)
 target_link_libraries(delaunay bvh distance)
 target_compile_features(delaunay PRIVATE cxx_std_17)
+
+add_executable(project_surface project_surface.cpp)
+target_link_libraries(project_surface mesh_io write_ply)
+target_compile_features(project_surface PRIVATE cxx_std_17)
 
 include(CTest)
 
